@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AES-CBC Hex Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark light;
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.1);
+      --border: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --radius: 10px;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.65);
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+              "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+      font-family: var(--font);
+      color: var(--text);
+      padding: 24px;
+    }
+    .app {
+      width: 100%;
+      max-width: 900px;
+      background: radial-gradient(circle at top left, #111827 0, #020617 55%);
+      border-radius: 22px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: var(--shadow);
+      padding: 24px 26px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.08) 0, transparent 55%),
+        radial-gradient(circle at 100% 0, rgba(96, 165, 250, 0.12) 0, transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .title-block h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.14);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #bbf7d0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .title-block p {
+      margin: 4px 0 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .pill {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(15, 23, 42, 0.88);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, #020617 0, #020617 40%, #020617 100%);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 14px 16px 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+    .card-header h2 {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #9ca3af;
+    }
+    .card-header small {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    label {
+      display: block;
+      font-size: 0.77rem;
+      margin-bottom: 4px;
+      color: #9ca3af;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      font-family: var(--font);
+      font-size: 0.86rem;
+      color: var(--text);
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 9px;
+      border: 1px solid rgba(55, 65, 81, 0.85);
+      padding: 7px 10px;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+      background: rgba(15, 23, 42, 1);
+    }
+    textarea {
+      min-height: 98px;
+      resize: vertical;
+      line-height: 1.4;
+    }
+    .input-help {
+      font-size: 0.73rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .row > div {
+      flex: 1 1 140px;
+    }
+
+    .mode-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .mode-pill {
+      position: relative;
+    }
+    .mode-pill input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .mode-pill label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(75, 85, 99, 0.85);
+      background: rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: border 0.15s ease, background 0.15s ease, transform 0.08s ease;
+    }
+    .mode-pill label span.dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.9);
+    }
+    .mode-pill input:checked + label {
+      border-color: rgba(59, 130, 246, 0.9);
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(59, 130, 246, 0.08));
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.7);
+    }
+    .mode-pill input:checked + label span.dot {
+      background: #3b82f6;
+    }
+
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 7px 13px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background 0.16s ease, transform 0.08s ease, box-shadow 0.16s ease,
+                  border-color 0.16s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-color: #60a5fa;
+      color: white;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.55);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 40px rgba(37, 99, 235, 0.7);
+    }
+    .btn-ghost {
+      background: rgba(15, 23, 42, 0.9);
+      border-color: rgba(75, 85, 99, 0.8);
+      color: var(--muted);
+    }
+    .btn-ghost:hover {
+      background: rgba(17, 24, 39, 0.95);
+      border-color: rgba(148, 163, 184, 0.7);
+    }
+
+    .result {
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.78rem;
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.85) 0, #020617 45%);
+      border-radius: 9px;
+      border: 1px solid rgba(55, 65, 81, 0.95);
+      padding: 9px 10px;
+      min-height: 70px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #e5e7eb;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+    .status.error .status-dot {
+      background: var(--danger);
+    }
+
+    .small-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .chip {
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      padding: 2px 7px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.96);
+    }
+
+    @media (max-width: 780px) {
+      .app {
+        padding: 18px 14px 16px;
+        border-radius: 18px;
+      }
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .pill-row {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <div class="title-block">
+        <h1>
+          AES-CBC Hex Console
+          <span class="badge">AES-128 / AES-256</span>
+        </h1>
+        <p>Paste a hex string, choose a mode, and work with Uint8Array, encrypted or decrypted values directly in your browser.</p>
+      </div>
+      <div class="pill-row">
+        <span class="pill"><span class="pill-dot"></span>Web Crypto API</span>
+        <span class="pill">Client-side only</span>
+      </div>
+    </header>
+
+    <section class="grid">
+      <!-- Left: Inputs -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Inputs</h2>
+          <small>Key never leaves your browser</small>
+        </div>
+
+        <div>
+          <label for="keyInput">AES Key (UTF‑8)</label>
+          <input id="keyInput" type="text"
+                 placeholder="e.g. my-secret-key-16 / 32 chars" />
+          <p class="input-help">
+            Key length must be 16, 24 or 32 bytes (for AES‑128 / 192 / 256). It will be encoded as UTF‑8.
+          </p>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label for="hexInput">Hex data</label>
+          <textarea id="hexInput" spellcheck="false"
+                    placeholder="Example: 14e940ad3f294bea975fb28106480501"></textarea>
+          <p class="input-help">
+            No <code>0x</code> prefix required. Spaces and newlines are ignored.
+          </p>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Operation</label>
+            <div class="mode-group">
+              <div class="mode-pill">
+                <input type="radio" id="mode-bytes" name="mode" value="bytes" checked />
+                <label for="mode-bytes">
+                  <span class="dot"></span>
+                  <span>To Uint8Array</span>
+                </label>
+              </div>
+              <div class="mode-pill">
+                <input type="radio" id="mode-encrypt" name="mode" value="encrypt" />
+                <label for="mode-encrypt">
+                  <span class="dot"></span>
+                  <span>Encrypt</span>
+                </label>
+              </div>
+              <div class="mode-pill">
+                <input type="radio" id="mode-decrypt" name="mode" value="decrypt" />
+                <label for="mode-decrypt">
+                  <span class="dot"></span>
+                  <span>Decrypt</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label for="ivInput">IV (hex, optional)</label>
+            <input id="ivInput" type="text"
+                   placeholder="default: 16 zero bytes" />
+            <p class="input-help">
+              32‑hex‑char (16 bytes). Leave empty to use zero IV (only for testing).
+            </p>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn-ghost" id="fillDemo">Fill demo</button>
+          <button type="button" class="btn-primary" id="runBtn">
+            Run operation
+          </button>
+        </div>
+      </section>
+
+      <!-- Right: Result -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Result</h2>
+          <small>Hex, bytes or UTF‑8 text depending on mode</small>
+        </div>
+
+        <div class="result" id="resultBox">Waiting for input…</div>
+
+        <div class="status-row">
+          <div id="status" class="status">
+            <span class="status-dot"></span>
+            <span id="statusText">Idle</span>
+          </div>
+          <div class="small-chips">
+            <span class="chip" id="lenChip">len: –</span>
+            <span class="chip" id="modeChip">mode: bytes</span>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    // ----- Helper functions ----- //
+
+    function normalizeHex(str) {
+      if (!str) return "";
+      return str.replace(/^0x/i, "").replace(/[^0-9a-fA-F]/g, "").toLowerCase();
+    }
+
+    function hexToBytes(hex) {
+      const clean = normalizeHex(hex);
+      if (clean.length === 0) return new Uint8Array();
+      if (clean.length % 2 !== 0) {
+        throw new Error("Hex string length must be even.");
+      }
+      const bytes = new Uint8Array(clean.length / 2);
+      for (let i = 0; i < clean.length; i += 2) {
+        bytes[i / 2] = parseInt(clean.slice(i, i + 2), 16);
+      }
+      return bytes;
+    }
+
+    function bytesToHex(bytes) {
+      return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function textToBytes(text) {
+      return new TextEncoder().encode(text);
+    }
+
+    function bytesToText(bytes) {
+      return new TextDecoder().decode(bytes);
+    }
+
+    async function importAesKeyFromString(keyStr) {
+      const raw = textToBytes(keyStr);
+      const validLengths = [16, 24, 32];
+      if (!validLengths.includes(raw.length)) {
+        throw new Error(
+          "AES key must be 16, 24, or 32 bytes after UTF‑8 encoding (got " +
+          raw.length + ")."
+        );
+      }
+      return crypto.subtle.importKey(
+        "raw",
+        raw,
+        { name: "AES-CBC" },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    function getIv(ivHex) {
+      if (!ivHex) {
+        return new Uint8Array(16); // 16 zero bytes (test only)
+      }
+      const ivBytes = hexToBytes(ivHex);
+      if (ivBytes.length !== 16) {
+        throw new Error("IV must be 16 bytes (32 hex chars).");
+      }
+      return ivBytes;
+    }
+
+    async function aesEncryptBytes(keyStr, dataBytes, ivHex) {
+      const key = await importAesKeyFromString(keyStr);
+      const iv = getIv(ivHex);
+      const encrypted = await crypto.subtle.encrypt(
+        { name: "AES-CBC", iv },
+        key,
+        dataBytes
+      );
+      return new Uint8Array(encrypted);
+    }
+
+    async function aesDecryptBytes(keyStr, cipherBytes, ivHex) {
+      const key = await importAesKeyFromString(keyStr);
+      const iv = getIv(ivHex);
+      const decrypted = await crypto.subtle.decrypt(
+        { name: "AES-CBC", iv },
+        key,
+        cipherBytes
+      );
+      return new Uint8Array(decrypted);
+    }
+
+    // ----- UI wiring ----- //
+
+    const keyInput   = document.getElementById("keyInput");
+    const hexInput   = document.getElementById("hexInput");
+    const ivInput    = document.getElementById("ivInput");
+    const runBtn     = document.getElementById("runBtn");
+    const fillDemo   = document.getElementById("fillDemo");
+    const resultBox  = document.getElementById("resultBox");
+    const statusBox  = document.getElementById("status");
+    const statusDot  = statusBox.querySelector(".status-dot");
+    const statusText = document.getElementById("statusText");
+    const lenChip    = document.getElementById("lenChip");
+    const modeChip   = document.getElementById("modeChip");
+
+    function getMode() {
+      return document.querySelector('input[name="mode"]:checked').value;
+    }
+
+    function setStatus(ok, text) {
+      statusBox.classList.toggle("error", !ok);
+      statusDot.style.background = ok ? "#22c55e" : "#f97373";
+      statusText.textContent = text;
+    }
+
+    function setResult(content, byteLength, modeLabel) {
+      resultBox.textContent = content;
+      lenChip.textContent = "len: " + (byteLength ?? "–");
+      modeChip.textContent = "mode: " + modeLabel;
+    }
+
+    async function handleRun() {
+      const mode = getMode();
+      const keyStr = keyInput.value.trim();
+      const hexStr = hexInput.value.trim();
+      const ivHex  = ivInput.value.trim();
+
+      setStatus(true, "Working…");
+      setResult("Processing…", null, mode);
+
+      try {
+        if (!hexStr && mode !== "decrypt") {
+          throw new Error("Please paste a hex string.");
+        }
+
+        if (mode !== "bytes" && !keyStr) {
+          throw new Error("Please enter an AES key.");
+        }
+
+        if (mode === "bytes") {
+          const bytes = hexToBytes(hexStr);
+          setStatus(true, "Converted to Uint8Array.");
+          setResult(
+            "Uint8Array(" + bytes.length + ")\n[ " +
+            Array.from(bytes).join(", ") + " ]",
+            bytes.length,
+            "bytes"
+          );
+          return;
+        }
+
+        if (mode === "encrypt") {
+          const plainBytes = hexToBytes(hexStr);
+          const cipherBytes = await aesEncryptBytes(keyStr, plainBytes, ivHex);
+          const cipherHex = bytesToHex(cipherBytes);
+          setStatus(true, "Encrypted successfully.");
+          setResult(cipherHex, cipherBytes.length, "encrypt");
+          return;
+        }
+
+        if (mode === "decrypt") {
+          const cipherBytes = hexToBytes(hexStr);
+          const plainBytes = await aesDecryptBytes(keyStr, cipherBytes, ivHex);
+          let textPreview = "";
+          try {
+            textPreview = bytesToText(plainBytes);
+          } catch (_) {
+            textPreview = "";
+          }
+          const hexLine = bytesToHex(plainBytes);
+          const combined =
+            "Decrypted (hex):\n" + hexLine +
+            (textPreview
+              ? "\n\nAs UTF‑8 text:\n" + textPreview
+              : "");
+          setStatus(true, "Decrypted successfully.");
+          setResult(combined, plainBytes.length, "decrypt");
+        }
+      } catch (err) {
+        console.error(err);
+        setStatus(false, err.message || String(err));
+        setResult("Error: " + (err.message || String(err)), null, mode);
+      }
+    }
+
+    runBtn.addEventListener("click", () => {
+      handleRun();
+    });
+
+    fillDemo.addEventListener("click", () => {
+      keyInput.value = "my-secret-key-16!!";
+      hexInput.value = "14e940ad3f294bea975fb28106480501";
+      ivInput.value = "";
+      setStatus(true, "Demo values filled. Choose mode and run.");
+      setResult("Waiting for operation…", null, getMode());
+    });
+
+    ["mode-bytes", "mode-encrypt", "mode-decrypt"].forEach(id => {
+      document.getElementById(id).addEventListener("change", () => {
+        modeChip.textContent = "mode: " + getMode();
+      });
+    });
+
+    setResult("Waiting for input…", null, "bytes");
+    setStatus(true, "Idle");
+  </script>
+</body>
+</html>
